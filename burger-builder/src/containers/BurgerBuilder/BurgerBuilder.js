@@ -36,17 +36,53 @@ class BurgerBuilder extends Component {
   }
 
   removeIngredientHandler = type => {
-
+    const oldCount = this.state.ingredients[type];
+    const updatedCount = oldCount - 1;
+    const updatedIngredients = {
+      ...this.state.ingredients
+    };
+    updatedIngredients[type] = updatedCount;
+    const priceDeduction = INGREDIENT_PRICES[type];
+    const oldPrice = this.state.totalPrice;
+    const newPrice = oldPrice - priceDeduction;
+    this.setState({totalPrice: newPrice, ingredients: updatedIngredients});
   }
 
   render() {
+    const disabledInfo = { ...this.state.ingredients };
+    for (let key in disabledInfo) {
+      disabledInfo[key] = disabledInfo[key] <= 0
+    }
+    console.log(disabledInfo);
+
     return (
       <Aux>
         <Burger ingredients={this.state.ingredients} />
-        <BuildControls ingredientAdded={this.addIngredientHandler} />
+        <BuildControls
+          ingredientAdded={this.addIngredientHandler}
+          ingredientRemoved={this.removeIngredientHandler}
+          disabled={disabledInfo}
+          price={this.state.totalPrice} />
       </Aux>
     );
   }
 }
 
 export default BurgerBuilder;
+
+/*
+
+const disableInfo = {...this.state.ingredients};
+So, we put the array of ingredients in an object form like:
+{bacon: 0, cheese: 0, meat: 1, salad: 0}
+
+Then, we use this for loop to iterate over all keys of the object (bacon, cheese, meat and salad)
+and compare the value associated with the key with 0.
+The result of the condition disabledInfo[key] <= 0 (true or false) is the
+new value of the respective key in the object.
+
+So, the object of ingredients {bacon: 0, cheese: 0, meat: 1, salad: 0}
+will be transformed in the object {bacon: true, cheese: true, meat: false, salad: true}
+that will be used to disable or not the less button inside the BuildControl component.
+
+*/
