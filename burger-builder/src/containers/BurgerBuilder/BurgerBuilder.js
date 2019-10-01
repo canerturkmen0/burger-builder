@@ -5,6 +5,7 @@ import Burger from "../../components/Burger/Burger";
 import BuildControls from "../../components/Burger/BuildControls/BuildControls";
 import Modal from "../../components/UI/Modal/Modal";
 import OrderSummary from "../../components/Burger/OrderSummary/OrderSummary";
+import axios from "../../axios-orders";
 
 const INGREDIENT_PRICES = {
   salad: 0.5,
@@ -75,7 +76,24 @@ class BurgerBuilder extends Component {
   };
 
   purchaseContinueHandler = () => {
-    alert("You continue"); // TODO: HTTP Request
+    const order = {
+      ingredients: this.state.ingredients,
+      price: this.state.totalPrice, // in production, you should definitely calculate the final price on the server because you probably have your product stored on the server there to make sure that the user isn't manipulating the code before sending it and manipulates the price which you're using
+      customer: {
+        name: "Max Schwarzmüller",
+        addres: {
+          street: "Teststreet 1",
+          zipCode: "41351",
+          country: "Germany"
+        },
+        email: "test@test.com"
+      },
+      deliveryMethod: "fastest"
+    };
+    axios
+      .post("/orders.json", order) //any node name of your choise .json
+      .then(response => console.log(response))
+      .catch(error => console.log(error));
   };
 
   render() {
