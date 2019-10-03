@@ -5,6 +5,7 @@ import Burger from "../../components/Burger/Burger";
 import BuildControls from "../../components/Burger/BuildControls/BuildControls";
 import Modal from "../../components/UI/Modal/Modal";
 import OrderSummary from "../../components/Burger/OrderSummary/OrderSummary";
+import Spinner from "../../components/UI/Spinner/Spinner";
 import axios from "../../axios-orders";
 
 const INGREDIENT_PRICES = {
@@ -24,7 +25,8 @@ class BurgerBuilder extends Component {
     },
     totalPrice: 4,
     purchasable: false,
-    purchasing: false
+    purchasing: false,
+    loading: false
   };
 
   updatePurchaseState(ingredients) {
@@ -76,6 +78,7 @@ class BurgerBuilder extends Component {
   };
 
   purchaseContinueHandler = () => {
+    this.setState({ loading: true });
     const order = {
       ingredients: this.state.ingredients,
       price: this.state.totalPrice, // in production, you should definitely calculate the final price on the server because you probably have your product stored on the server there to make sure that the user isn't manipulating the code before sending it and manipulates the price which you're using
@@ -91,15 +94,39 @@ class BurgerBuilder extends Component {
       deliveryMethod: "fastest"
     };
     axios
-      .post("/orders.json", order) //any node name of your choise .json
-      .then(response => console.log(response))
-      .catch(error => console.log(error));
+      .post("/orders.json", order) //any node name of your choise .json (because of Firebase)
+      .then(response => {
+        this.setState({ loading: false, purchasing: false });
+      })
+      .catch(error => {
+        this.setState({ loading: false, purchasing: false });
+      });
   };
 
   render() {
     const disabledInfo = { ...this.state.ingredients };
     for (let key in disabledInfo) {
       disabledInfo[key] = disabledInfo[key] <= 0;
+    }
+    let orderSummary = (
+      <OrderSummary
+        ingredients={this.state.ingredients}
+        price={this.state.totalPrice.toFixed(2)}
+        purchaseCanceled={this.purchaseCancelHandler}
+        purchaseContinued={this.purchaseContinueHandler}
+      />
+    );
+    if (this.state.loading) {
+      orderSummary = <Spinner />;
+      /*
+      We are correctly setting loading and so on and OrderSummary also is the spinner therefore.
+      But somehow our modal doesn't update.
+      Because our Modal code use shouldComponentUpdate and we basically only update the component if the show state changedç
+      However, the children of the component simply change to props.children.changed, (in Modal),
+      We're passing a new child, we're passing the spinner instead of the OrderSummary.
+      That doesn't trigger an update.
+      So we need to finetune shouldComponentUpdate in Modal (look at it)
+      */
     }
 
     return (
@@ -108,12 +135,7 @@ class BurgerBuilder extends Component {
           show={this.state.purchasing}
           modalClosed={this.purchaseCancelHandler}
         >
-          <OrderSummary
-            ingredients={this.state.ingredients}
-            price={this.state.totalPrice.toFixed(2)}
-            purchaseCanceled={this.purchaseCancelHandler}
-            purchaseContinued={this.purchaseContinueHandler}
-          />
+          {orderSummary}
         </Modal>
         <Burger ingredients={this.state.ingredients} />
         <BuildControls
